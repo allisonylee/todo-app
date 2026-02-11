@@ -14,6 +14,8 @@ let todos = [
 let nextTodoId = 4;
 let filter = "all"; // can be 'all', 'active', or 'completed'
 
+const todoApp = createTodoApp();
+
 // Function to render the todos based on the current filter
 const renderTodos = () => {
   todoListElement.replaceChildren(...filterTodos(todos, filter).map(createTodoItem));
@@ -63,7 +65,7 @@ const handleKeyDownToCreateNewTodo = (event) => {
   if (event.key === "Enter") {
     const todoText = event.target.value.trim();
     if (todoText) {
-      todos = addTodo(todos, todoText);
+      todoApp.addTodo(todoText);
       event.target.value = "";
       renderTodos();
     }
@@ -75,8 +77,7 @@ function handleClickOnNavbar(event) {
   // if the clicked element is an anchor tag
   if (event.target.tagName === "A") {
     const hrefValue = event.target.href;
-    const action = hrefValue.split("/").pop();
-    filter = action === "" ? "all" : action;
+    filter = hrefValue.split("/").pop() || "all";
 
     // render the app UI
     renderTodoNavBar(hrefValue);
@@ -84,51 +85,58 @@ function handleClickOnNavbar(event) {
   }
 }
 
+const createTodoApp = () => {
+  let todos = [];
+  let nextTodoId = 1;
+  let filter = "all";
+
+  return {
+    addTodo: (newTodoText) => {
+      todos = addTodo(todos, newTodoText, nextTodoId++);
+    }, 
+    toggleTodo: (todoId) => {
+      todos = toggleTodo(todos, todoId);
+    }, 
+    setFilter: (newFilter) => {
+      todos = toggleTodo(todos, todoId);
+    }, 
+    getTodos: () => filterTodos(todos, filter),
+  };
+}
+
+const updateClassList = (element, isActive) => {
+  const classes = ["underline", "underline-offset-4", "decoration-rose-800", "decoration-2"];
+  if (isActive) {
+    element.classList.add(...classes);
+  } else {
+    element.classList.remove(...classes);
+  }
+}
+
 // Function to update the navbar anchor elements
 function renderTodoNavBar(href) {
-  const elements = todoNav.children;
-  for (let i = 0; i < elements.length; i++) {
-    const element = elements[i];
-    if (element.href === href) {
-      element.classList.add(
-        "underline",
-        "underline-offset-4",
-        "decoration-rose-800",
-        "decoration-2",
-      );
-    } else {
-      element.classList.remove(
-        "underline",
-        "underline-offset-4",
-        "decoration-rose-800",
-        "decoration-2",
-      );
-    }
-  }
+  Array.from(todoNav.children).forEach((element) => {
+    updateClassList(element, element.href === href);
+  });
 }
 
 // Function to toggle the completed status of a todo
 function handleClickOnTodoList(event) {
-  let todo = null;
-  if (event.target.id !== null && event.target.id.includes("todo-text")) {
-    todo = event.target;
-  }
-
-  let todoIdNumber = -1;
-  if (todo) {
-    const todoId = event.target.id.split("-").pop();
-    todoIdNumber = Number(todoId);
-  }
-
-  for (let i = 0; i < todos.length; i++) {
-    if (todos[i].id === todoIdNumber) {
-      todos[i].completed = !todos[i].completed;
-    }
-  }
+  todos = toggleTodo(todos, parseTodoId(findTargetTodoElement(event)));
 
   // Re-render the app UI
   renderTodos();
 }
+
+const toggleTodo = (todos, todoId) => 
+  todos.map((todo) => 
+    todo.id === todoId ? {...todo, completed: !todo.completed} : todo
+  );
+
+const findTargetTodoElement = (event) => event.target.id?.includes("todo-text") ? event.target : null;
+
+const parseTodoId = (todo) => (todo ? Number(todo.id.split("-").pop()) : -1);
+
 
 // Add the event listeners
 todoListElement.addEventListener("click", handleClickOnTodoList);
