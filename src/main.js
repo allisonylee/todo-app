@@ -6,7 +6,7 @@ const inputNewTodo = document.getElementById("new-todo");
 const todoNav = document.getElementById("todo-nav");
 
 // Define the state of our app
-const todos = [
+let todos = [
   { id: 1, text: "Buy milk", completed: false },
   { id: 2, text: "Buy bread", completed: false },
   { id: 3, text: "Buy jam", completed: true },
@@ -15,28 +15,26 @@ let nextTodoId = 4;
 let filter = "all"; // can be 'all', 'active', or 'completed'
 
 // Function to render the todos based on the current filter
-function renderTodos() {
-  // Clear the current list to avoid duplicates
-  todoListElement.innerHTML = "";
-
-  // Filter todos based on the current filter setting
-  let filteredTodos = [];
-  for (let i = 0; i < todos.length; i++) {
-    const todo = todos[i];
-    if (filter === "all") {
-      filteredTodos.push(todo);
-    } else if (filter === "completed" && todo.completed === true) {
-      filteredTodos.push(todo);
-    } else if (filter === "active" && todo.completed === false) {
-      filteredTodos.push(todo);
-    }
-  }
-
-  // Loop through the filtered todos and add them to the DOM
-  filteredTodos.forEach((todo) => {
-    todoListElement.appendChild(createTodoItem(todo));
-  });
+const renderTodos = () => {
+  todoListElement.replaceChildren(...filterTodos(todos, filter).map(createTodoItem));
 }
+
+const filterTodos = (todos, filter) => {
+  switch (filter) {
+    case "all":
+      return [...todos];
+    case "completed":
+      return todos.filter((todo) => todo.completed);
+    case "active":
+      return todos.filter((todo) => !todo.completed);
+    default:
+      return [...todos];
+  }
+};
+
+const addTodo = (todos, newTodoText) => [
+  ...todos, {id: nextTodoId++, text: newTodoText, completed: false},
+];
 
 const createTodoText = (todo) => {
   const todoText = document.createElement("div");
@@ -61,13 +59,14 @@ const createTodoItem = (todo) => {
 }
 
 // Function to handle adding a new todo
-function handleKeyDownToCreateNewTodo(event) {
-  const newTodoInput = event.target;
-  const todoText = newTodoInput.value.trim();
-  if (event.key === "Enter" && todoText !== "") {
-    todos.push({ id: nextTodoId++, text: todoText, completed: false });
-    newTodoInput.value = ""; // clear the input
-    renderTodos();
+const handleKeyDownToCreateNewTodo = (event) => {
+  if (event.key === "Enter") {
+    const todoText = event.target.value.trim();
+    if (todoText) {
+      todos = addTodo(todos, todoText);
+      event.target.value = "";
+      renderTodos();
+    }
   }
 }
 
