@@ -4,6 +4,9 @@ import "./style.css";
 const todoListElement = document.getElementById("todo-list");
 const inputNewTodo = document.getElementById("new-todo");
 const todoNav = document.getElementById("todo-nav");
+const markAllCompleted = document.getElementById("mark-all-completed");
+const clearCompleted = document.getElementById("clear-completed");
+const activeTodosCount = document.getElementById("todo-count");
 
 // Helper function to create a new array with the existing todos and a new todo item
 const addTodo = (todos, newTodoText, newTodoId) => [
@@ -31,6 +34,18 @@ const filterTodos = (todos, filter) => {
   }
 };
 
+// Helper function to mark all todos as completed
+const markAllTodosCompleted = (todos) => {
+  return todos.map((todo) => {
+    return { ...todo, completed: true };
+  });
+};
+
+// Helper function to delete all completed todos
+const deleteCompletedTodos = (todos) => {
+  return todos.filter((todo) => !todo.completed);
+};
+
 // Factory function to create a todo app
 const createTodoApp = () => {
   // Define the state of our app
@@ -48,6 +63,14 @@ const createTodoApp = () => {
     setFilter: (newFilter) => {
       filter = newFilter;
     },
+    markAllCompleted: () => {
+      todos = markAllTodosCompleted(todos);
+    },
+    deleteCompleted: () => {
+      todos = deleteCompletedTodos(todos);
+    },
+    getNumberOfActiveTodos: () =>
+      todos.reduce((acc, todo) => acc + !todo.completed, 0),
     getTodos: () => filterTodos(todos, filter),
   };
 };
@@ -88,6 +111,8 @@ const renderTodos = () => {
 
   const todoElements = todoApp.getTodos().map(createTodoItem);
   todoListElement.append(...todoElements);
+
+  activeTodosCount.innerText = `${todoApp.getNumberOfActiveTodos()} item${todoApp.getNumberOfActiveTodos() === 1 ? "" : "s"} left`;
 };
 
 // Event handler to create a new todo item
@@ -148,8 +173,22 @@ const handleClickOnNavbar = (event) => {
   }
 };
 
+// Event handler to mark all todos as completed
+const handleMarkAllCompleted = () => {
+  todoApp.markAllCompleted();
+  renderTodos();
+};
+
+// Event handler to clear all completed todos
+const clearCompletedTodos = () => {
+  todoApp.deleteCompleted();
+  renderTodos();
+};
+
 // Add the event listeners
 todoListElement.addEventListener("click", handleClickOnTodoList);
 inputNewTodo.addEventListener("keydown", handleKeyDownToCreateNewTodo);
 todoNav.addEventListener("click", handleClickOnNavbar);
+markAllCompleted.addEventListener("click", handleMarkAllCompleted);
+clearCompleted.addEventListener("click", clearCompletedTodos);
 document.addEventListener("DOMContentLoaded", renderTodos);
